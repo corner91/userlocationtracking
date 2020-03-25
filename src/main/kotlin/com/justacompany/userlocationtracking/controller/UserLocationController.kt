@@ -1,5 +1,6 @@
 package com.justacompany.userlocationtracking.controller
 
+import com.justacompany.userlocationtracking.periphery.NotificationResponse
 import com.justacompany.userlocationtracking.periphery.UserLocationRequest
 import com.justacompany.userlocationtracking.service.UserLocationService
 import org.springframework.web.bind.annotation.*
@@ -16,7 +17,7 @@ class UserLocationController(
     }
 
     @GetMapping("/notifications/{userId}")
-    fun getNotificationForUser(@PathVariable userId: String): Boolean {
-        return userLocationService.getNotificationForUser(userId)
+    fun getNotificationForUser(@PathVariable userId: String): NotificationResponse {
+        return NotificationResponse(userLocationService.getNotificationForUser(userId))
     }
 }

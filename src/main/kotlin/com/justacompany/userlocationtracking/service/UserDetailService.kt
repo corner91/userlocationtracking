@@ -1,27 +1,64 @@
 package com.justacompany.userlocationtracking.service
 
 import com.justacompany.userlocationtracking.domain.UserDetail
-import com.justacompany.userlocationtracking.periphery.UserDetailRequest
+import com.justacompany.userlocationtracking.exception.UserAlreadyRegisteredException
+import com.justacompany.userlocationtracking.periphery.UserDetailLoginRequest
+import com.justacompany.userlocationtracking.periphery.UserDetailRegisterRequest
 import com.justacompany.userlocationtracking.repository.UserDetailRepository
+import com.sun.mail.smtp.SMTPMessage
+import org.springframework.mail.SimpleMailMessage
+import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.stereotype.Service
 import java.util.*
+import javax.mail.MessagingException
+import javax.mail.Session
+import javax.mail.internet.InternetAddress
+import javax.mail.internet.MimeMessage
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import javax.mail.Message
+import com.sun.org.apache.xml.internal.serializer.utils.Utils.messages
+
+
+
 
 @Service
 class UserDetailService(
     private val userDetailRepository: UserDetailRepository
 ) {
 
-    fun postUserDetail(userDetailRequest: UserDetailRequest) {
-        userDetailRepository.save(makeUserDetailFromUserDetailRequest(userDetailRequest))
+    companion object {
+        private const val salt = "bbnerfgaFEFvtr@454FRFRs!!dwrfwFWEf34@f42"
     }
 
-    fun generateUserId(): String {
-        return UUID.randomUUID().toString()
+    fun register(userDetailRegisterRequest: UserDetailRegisterRequest) {
+        checkIfEmailAlreadyPresent(userDetailRegisterRequest.email)
+        userDetailRepository.save(makeUserDetailFromUserDetailRequest(userDetailRegisterRequest))
     }
 
-    private fun makeUserDetailFromUserDetailRequest(userDetailRequest: UserDetailRequest): UserDetail {
+    fun login(userDetailLoginRequest: UserDetailLoginRequest): Boolean {
+        if (userDetailRepository.findByEmailAndPassword(
+                        email = userDetailLoginRequest.email.toLowerCase(),
+                        password = Base64.getEncoder().encodeToString(userDetailLoginRequest.password.toByteArray()) +
+                                Base64.getEncoder().encodeToString(salt.toByteArray())
+                ) != null) {
+            return true
+        }
+        return false
+    }
+
+    fun checkIfEmailAlreadyPresent(email: String) {
+        if (userDetailRepository.findByEmail(email.toLowerCase()) != null) {
+            throw UserAlreadyRegisteredException()
+        }
+    }
+
+    private fun makeUserDetailFromUserDetailRequest(userDetailRegisterRequest: UserDetailRegisterRequest): UserDetail {
         return UserDetail(
-                userId = userDetailRequest.userId,
+                email = userDetailRegisterRequest.email.toLowerCase(),
+                password = Base64.getEncoder().encodeToString(userDetailRegisterRequest.password.toByteArray()) +
+                        Base64.getEncoder().encodeToString(salt.toByteArray()),
+                phoneNumber = userDetailRegisterRequest.phoneNumber,
                 dateCreated = Date()
         )
     }

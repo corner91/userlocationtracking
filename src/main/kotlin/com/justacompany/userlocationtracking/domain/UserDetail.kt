@@ -7,13 +7,16 @@ import javax.persistence.*
 data class UserDetail (
        @Id
        @GeneratedValue(strategy = GenerationType.SEQUENCE)
-       val userId: String,
+       val id: Long? = null,
+
+       @Column
+       val email: String,
+
+       @Column
+       val password: String,
 
        @Column
        val phoneNumber: String? = null,
-
-       @Column
-       val password: String? = null,
 
        @Column
        val dateCreated: Date

@@ -1,5 +1,6 @@
 package com.justacompany.userlocationtracking.controller
 
+import com.justacompany.userlocationtracking.periphery.UserAffectedStatusResponse
 import com.justacompany.userlocationtracking.periphery.UserStatusRequest
 import com.justacompany.userlocationtracking.service.UserStatusService
 import org.springframework.web.bind.annotation.*
@@ -16,7 +17,7 @@ class UserStatusController(
     }
 
     @GetMapping("/{userId}")
-    fun checkIfUserAffected(@PathVariable userId: String): Boolean {
-        return userStatusService.checkIfUserIsAffected(userId)
+    fun checkIfUserAffected(@PathVariable userId: String): UserAffectedStatusResponse {
+        return UserAffectedStatusResponse(userStatusService.checkIfUserIsAffected(userId))
     }
 }

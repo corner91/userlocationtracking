@@ -7,6 +7,5 @@ import javax.persistence.Id
 data class UserStatusRequest (
         val id: Long? = null,
         val userId: String,
-        val raiseAlarm: Boolean = false,
-        val issueType: IssueType
+        val raiseAlarm: Boolean = false
 )

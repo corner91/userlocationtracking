@@ -1,7 +1,8 @@
 package com.justacompany.userlocationtracking.controller
 
-import com.justacompany.userlocationtracking.periphery.GenerateUserIdResponse
-import com.justacompany.userlocationtracking.periphery.UserDetailRequest
+import com.justacompany.userlocationtracking.periphery.LoginResponse
+import com.justacompany.userlocationtracking.periphery.UserDetailLoginRequest
+import com.justacompany.userlocationtracking.periphery.UserDetailRegisterRequest
 import com.justacompany.userlocationtracking.service.UserDetailService
 import org.springframework.web.bind.annotation.*
 
@@ -12,12 +13,17 @@ class UserDetailController(
 ) {
 
     @PostMapping
-    fun postUserDetail(@RequestBody userDetailRequest: UserDetailRequest) {
-        userDetailService.postUserDetail(userDetailRequest)
+    fun register(@RequestBody userDetailRegisterRequest: UserDetailRegisterRequest) {
+        userDetailService.register(userDetailRegisterRequest)
     }
 
-    @GetMapping("/userId")
-    fun generateUserId(): GenerateUserIdResponse {
-        return GenerateUserIdResponse(userDetailService.generateUserId())
+    @PostMapping("/login")
+    fun login(@RequestBody userDetailLoginRequest: UserDetailLoginRequest): LoginResponse {
+        return LoginResponse(userDetailService.login(userDetailLoginRequest))
     }
+
+    /*@GetMapping("/password/{email}")
+    fun rememberPassword(@PathVariable email: String) {
+        userDetailService.sendRememberPasswordEmail(email = email)
+    }*/
 }
