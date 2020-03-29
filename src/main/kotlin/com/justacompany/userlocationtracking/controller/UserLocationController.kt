@@ -18,6 +18,6 @@ class UserLocationController(
 
     @GetMapping("/notifications/{userId}")
     fun getNotificationForUser(@PathVariable userId: String): NotificationResponse {
-        return NotificationResponse(userLocationService.getNotificationForUser(userId))
+        return userLocationService.getNotificationForUser(userId)
     }
 }

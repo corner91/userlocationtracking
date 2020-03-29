@@ -2,6 +2,7 @@ package com.justacompany.userlocationtracking.service
 
 import com.justacompany.userlocationtracking.datatransferobject.NormalizedCoordinates
 import com.justacompany.userlocationtracking.domain.UserLocation
+import com.justacompany.userlocationtracking.periphery.NotificationResponse
 import com.justacompany.userlocationtracking.periphery.UserLocationRequest
 import com.justacompany.userlocationtracking.repository.UserLocationRepository
 import com.justacompany.userlocationtracking.repository.UserStatusRepository
@@ -13,7 +14,8 @@ import java.util.*
 @Service
 class UserLocationService(
         private val userLocationRepository: UserLocationRepository,
-        private val userStatusRepository: UserStatusRepository
+        private val userStatusRepository: UserStatusRepository,
+        private val userStatusService: UserStatusService
 ) {
 
     companion object{
@@ -24,7 +26,16 @@ class UserLocationService(
         userLocationRepository.saveAll(makeUserLocationsFromUserLocationRequest(userLocationRequest))
     }
 
-    fun getNotificationForUser(userId: String): Boolean {
+    fun getNotificationForUser(userId: String): NotificationResponse {
+
+        if (userStatusService.checkIfUserIsAffected(userId)) {
+            return NotificationResponse(
+                    raiseAlarm = true,
+                    alreadyAffected = true,
+                    severityLevel = 3
+            )
+        }
+
         val geometryFactory = GeometryFactory()
 
         // find affected user polygons
@@ -56,19 +67,31 @@ class UserLocationService(
         for (affectedPoint in listOfAffectedPoints) {
             for (userPoint in listOfUserPoints) {
                 if (affectedPoint.intersects(userPoint)) {
-                    return true
+                    return NotificationResponse(
+                            raiseAlarm = true,
+                            alreadyAffected = false,
+                            severityLevel = 2
+                    )
                 }
             }
         }
         for (affectedPolygon in listOfAffectedPolygons) {
             for (userPolygon in listOfUserPolygons) {
                 if (affectedPolygon.intersects(userPolygon)) {
-                    return true
+                    return NotificationResponse(
+                            raiseAlarm = true,
+                            alreadyAffected = false,
+                            severityLevel = 3
+                    )
                 }
             }
         }
 
-        return false
+        return NotificationResponse(
+                raiseAlarm = false,
+                alreadyAffected = false,
+                severityLevel = 1
+        )
     }
 
     private fun normalizeChunks(chunkedCoordinates: List<List<Coordinate>>): NormalizedCoordinates {

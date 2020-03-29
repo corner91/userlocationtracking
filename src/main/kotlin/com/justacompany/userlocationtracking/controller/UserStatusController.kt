@@ -15,9 +15,4 @@ class UserStatusController(
     fun postUserStatus(@RequestBody userStatusRequest: UserStatusRequest) {
         userStatusService.postUserStatus(userStatusRequest)
     }
-
-    @GetMapping("/{userId}")
-    fun checkIfUserAffected(@PathVariable userId: String): UserAffectedStatusResponse {
-        return UserAffectedStatusResponse(userStatusService.checkIfUserIsAffected(userId))
-    }
 }
