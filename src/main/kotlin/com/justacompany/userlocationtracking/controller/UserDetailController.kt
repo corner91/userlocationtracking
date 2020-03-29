@@ -1,6 +1,7 @@
 package com.justacompany.userlocationtracking.controller
 
 import com.justacompany.userlocationtracking.periphery.LoginResponse
+import com.justacompany.userlocationtracking.periphery.SignInResponse
 import com.justacompany.userlocationtracking.periphery.UserDetailLoginRequest
 import com.justacompany.userlocationtracking.periphery.UserDetailRegisterRequest
 import com.justacompany.userlocationtracking.service.UserDetailService
@@ -13,8 +14,8 @@ class UserDetailController(
 ) {
 
     @PostMapping
-    fun register(@RequestBody userDetailRegisterRequest: UserDetailRegisterRequest) {
-        userDetailService.register(userDetailRegisterRequest)
+    fun register(@RequestBody userDetailRegisterRequest: UserDetailRegisterRequest): SignInResponse {
+        return userDetailService.register(userDetailRegisterRequest)
     }
 
     @PostMapping("/login")
