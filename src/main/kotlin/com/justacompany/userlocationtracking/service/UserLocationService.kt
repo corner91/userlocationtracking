@@ -7,6 +7,7 @@ import com.justacompany.userlocationtracking.periphery.UserLocationRequest
 import com.justacompany.userlocationtracking.repository.UserLocationRepository
 import com.justacompany.userlocationtracking.repository.UserStatusRepository
 import com.vividsolutions.jts.geom.Coordinate
+import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.geom.GeometryFactory
 import org.springframework.stereotype.Service
 import java.util.*
@@ -38,31 +39,71 @@ class UserLocationService(
         }
 
         val geometryFactory = GeometryFactory()
+        val listOfAffectedPolygons = mutableListOf<Geometry>()
+        val listOfAffectedPoints = mutableListOf<Geometry>()
+
+        val listOfUserPolygons = mutableListOf<Geometry>()
+        val listOfUserPoints = mutableListOf<Geometry>()
 
         // find affected user polygons
         val infectedUserIds = userStatusRepository.findAllUserIdByRaiseAlarm(
                 raiseAlarm = true
         ).map { it.userId }
+
         val sortedDescendingLocationsOfAllAffectedUsers = userLocationRepository.findAllByUserIdIn(infectedUserIds)
                 .sortedByDescending { userLocation -> userLocation.dateCreated }
-        val chunkedAffectedUserLocations = sortedDescendingLocationsOfAllAffectedUsers.chunked(CHUNK_SIZE)
-        val chunkedAffectedCoordinates = chunkedAffectedUserLocations.map { listOfAffectedUserLocations -> makeCoordinates(listOfAffectedUserLocations) }
-        val normalizedChunksAffectedCoordinates = normalizeChunks(chunkedAffectedCoordinates)
-        val listOfAffectedPolygons = normalizedChunksAffectedCoordinates.normalizedChunkedCoordinates
-                .map { coordinates -> geometryFactory.createPolygon(coordinates.toTypedArray()).buffer(BUFFER_AREA) }
 
-        val listOfAffectedPoints = normalizedChunksAffectedCoordinates.residualCoordinates
-                .map { coordinate -> geometryFactory.createPoint(coordinate).buffer(BUFFER_AREA) }
+        if (sortedDescendingLocationsOfAllAffectedUsers.size < CHUNK_SIZE) {
+            val nonChunkedAffectedUserPoints = makeCoordinates(sortedDescendingLocationsOfAllAffectedUsers)
+            val nonChunkedAffectedCoordinates = NormalizedCoordinates(
+                    normalizedChunkedCoordinates = emptyList(),
+                    residualCoordinates = nonChunkedAffectedUserPoints
+            )
+
+            listOfAffectedPoints.addAll(nonChunkedAffectedCoordinates.residualCoordinates
+                    .map { coordinate -> geometryFactory.createPoint(coordinate).buffer(BUFFER_AREA) }
+            )
+
+        } else {
+            val chunkedAffectedUserLocations = sortedDescendingLocationsOfAllAffectedUsers.chunked(CHUNK_SIZE)
+            val chunkedAffectedCoordinates = chunkedAffectedUserLocations.map { listOfAffectedUserLocations -> makeCoordinates(listOfAffectedUserLocations) }
+            val normalizedChunksAffectedCoordinates = normalizeChunks(chunkedAffectedCoordinates)
+
+            listOfAffectedPolygons.addAll(normalizedChunksAffectedCoordinates.normalizedChunkedCoordinates
+                    .map { coordinates -> geometryFactory.createPolygon(coordinates.toTypedArray()).buffer(BUFFER_AREA) }
+            )
+
+            listOfAffectedPoints.addAll(normalizedChunksAffectedCoordinates.residualCoordinates
+                    .map { coordinate -> geometryFactory.createPoint(coordinate).buffer(BUFFER_AREA) }
+            )
+        }
 
         // find user polygons
-        val userLocations = userLocationRepository.findAllByUserId(userId)
-        val chunkedUserLocations = userLocations.chunked(CHUNK_SIZE)
-        val chunkedUserCoordinates = chunkedUserLocations.map { listOfUserLocations -> makeCoordinates(listOfUserLocations) }
-        val normalizedChunksUserCoordinates = normalizeChunks(chunkedUserCoordinates)
-        val listOfUserPolygons = normalizedChunksUserCoordinates.normalizedChunkedCoordinates
-                .map { coordinates -> geometryFactory.createPolygon(coordinates.toTypedArray()).buffer(BUFFER_AREA) }
-        val listOfUserPoints = normalizedChunksUserCoordinates.residualCoordinates
-                .map { coordinate -> geometryFactory.createPoint(coordinate).buffer(BUFFER_AREA) }
+        val sortedDescendingLocationsOfUser = userLocationRepository.findAllByUserId(userId)
+                .sortedByDescending { userLocation -> userLocation.dateCreated }
+
+        if (sortedDescendingLocationsOfUser.size < CHUNK_SIZE) {
+            val nonChunkedUserPoints = makeCoordinates(sortedDescendingLocationsOfUser)
+            val nonChunkedUserCoordinates = NormalizedCoordinates(
+                    normalizedChunkedCoordinates = emptyList(),
+                    residualCoordinates = nonChunkedUserPoints
+            )
+
+            listOfUserPoints.addAll(nonChunkedUserCoordinates.residualCoordinates
+                    .map { coordinate -> geometryFactory.createPoint(coordinate).buffer(BUFFER_AREA) }
+            )
+        } else {
+            val chunkedUserLocations = sortedDescendingLocationsOfUser.chunked(CHUNK_SIZE)
+            val chunkedUserCoordinates = chunkedUserLocations.map { listOfUserLocations -> makeCoordinates(listOfUserLocations) }
+            val normalizedChunksUserCoordinates = normalizeChunks(chunkedUserCoordinates)
+            listOfUserPolygons.addAll(normalizedChunksUserCoordinates.normalizedChunkedCoordinates
+                    .map { coordinates -> geometryFactory.createPolygon(coordinates.toTypedArray()).buffer(BUFFER_AREA) }
+            )
+            listOfUserPoints.addAll(normalizedChunksUserCoordinates.residualCoordinates
+                    .map { coordinate -> geometryFactory.createPoint(coordinate).buffer(BUFFER_AREA) }
+            )
+        }
+
 
         // Check intersection with the user polygon
         for (affectedPoint in listOfAffectedPoints) {
