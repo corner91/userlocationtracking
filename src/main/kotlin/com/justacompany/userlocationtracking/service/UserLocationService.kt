@@ -20,7 +20,7 @@ class UserLocationService(
 ) {
 
     companion object{
-        private const val CHUNK_SIZE = 3
+        private const val CHUNK_SIZE = 4
         private const val BUFFER_AREA = 0.0005
     }
     fun postUserLocation(userLocationRequest: UserLocationRequest): NotificationResponse {
