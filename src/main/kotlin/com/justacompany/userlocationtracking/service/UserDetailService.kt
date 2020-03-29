@@ -2,6 +2,7 @@ package com.justacompany.userlocationtracking.service
 
 import com.justacompany.userlocationtracking.domain.UserDetail
 import com.justacompany.userlocationtracking.exception.UserAlreadyRegisteredException
+import com.justacompany.userlocationtracking.periphery.SignInResponse
 import com.justacompany.userlocationtracking.periphery.UserDetailLoginRequest
 import com.justacompany.userlocationtracking.periphery.UserDetailRegisterRequest
 import com.justacompany.userlocationtracking.repository.UserDetailRepository
@@ -31,9 +32,11 @@ class UserDetailService(
         private const val salt = "bbnerfgaFEFvtr@454FRFRs!!dwrfwFWEf34@f42"
     }
 
-    fun register(userDetailRegisterRequest: UserDetailRegisterRequest) {
-        checkIfEmailAlreadyPresent(userDetailRegisterRequest.email)
+    fun register(userDetailRegisterRequest: UserDetailRegisterRequest): SignInResponse {
+        if (!checkIfEmailAlreadyPresent(userDetailRegisterRequest.email))
+            return SignInResponse(isSignedIn = false)
         userDetailRepository.save(makeUserDetailFromUserDetailRequest(userDetailRegisterRequest))
+        return SignInResponse(isSignedIn = true)
     }
 
     fun login(userDetailLoginRequest: UserDetailLoginRequest): Boolean {
@@ -47,10 +50,12 @@ class UserDetailService(
         return false
     }
 
-    fun checkIfEmailAlreadyPresent(email: String) {
+    fun checkIfEmailAlreadyPresent(email: String): Boolean {
         if (userDetailRepository.findByEmail(email.toLowerCase()) != null) {
-            throw UserAlreadyRegisteredException()
+            return false
         }
+
+        return true
     }
 
     private fun makeUserDetailFromUserDetailRequest(userDetailRegisterRequest: UserDetailRegisterRequest): UserDetail {
