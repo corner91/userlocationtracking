@@ -12,8 +12,8 @@ class UserLocationController(
 ) {
 
     @PostMapping
-    fun postUserLocation(@RequestBody userLocationRequest: UserLocationRequest) {
-        userLocationService.postUserLocation(userLocationRequest)
+    fun postUserLocation(@RequestBody userLocationRequest: UserLocationRequest): NotificationResponse {
+        return userLocationService.postUserLocation(userLocationRequest)
     }
 
     @GetMapping("/notifications/{userId}")

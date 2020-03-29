@@ -22,8 +22,9 @@ class UserLocationService(
         private const val CHUNK_SIZE = 3
         private const val BUFFER_AREA = 0.0005
     }
-    fun postUserLocation(userLocationRequest: UserLocationRequest) {
+    fun postUserLocation(userLocationRequest: UserLocationRequest): NotificationResponse {
         userLocationRepository.saveAll(makeUserLocationsFromUserLocationRequest(userLocationRequest))
+        return getNotificationForUser(userId = userLocationRequest.userId)
     }
 
     fun getNotificationForUser(userId: String): NotificationResponse {
