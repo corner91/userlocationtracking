@@ -53,6 +53,14 @@ class UserLocationService(
         val sortedDescendingLocationsOfAllAffectedUsers = userLocationRepository.findAllByUserIdIn(infectedUserIds)
                 .sortedByDescending { userLocation -> userLocation.dateCreated }
 
+        if (sortedDescendingLocationsOfAllAffectedUsers.isNullOrEmpty()) {
+            return NotificationResponse(
+                    raiseAlarm = false,
+                    alreadyAffected = false,
+                    severityLevel = 1
+            )
+        }
+
         if (sortedDescendingLocationsOfAllAffectedUsers.size < CHUNK_SIZE) {
             val nonChunkedAffectedUserPoints = makeCoordinates(sortedDescendingLocationsOfAllAffectedUsers)
             val nonChunkedAffectedCoordinates = NormalizedCoordinates(
@@ -81,6 +89,14 @@ class UserLocationService(
         // find user polygons
         val sortedDescendingLocationsOfUser = userLocationRepository.findAllByUserId(userId)
                 .sortedByDescending { userLocation -> userLocation.dateCreated }
+
+        if (sortedDescendingLocationsOfUser.isNullOrEmpty()) {
+            return NotificationResponse(
+                    raiseAlarm = false,
+                    alreadyAffected = false,
+                    severityLevel = 1
+            )
+        }
 
         if (sortedDescendingLocationsOfUser.size < CHUNK_SIZE) {
             val nonChunkedUserPoints = makeCoordinates(sortedDescendingLocationsOfUser)
