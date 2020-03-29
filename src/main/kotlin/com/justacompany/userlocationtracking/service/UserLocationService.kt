@@ -128,7 +128,7 @@ class UserLocationService(
                     return NotificationResponse(
                             raiseAlarm = true,
                             alreadyAffected = false,
-                            severityLevel = 2
+                            severityLevel = 3
                     )
                 }
             }
@@ -139,7 +139,7 @@ class UserLocationService(
                     return NotificationResponse(
                             raiseAlarm = true,
                             alreadyAffected = false,
-                            severityLevel = 3
+                            severityLevel = 2
                     )
                 }
             }
